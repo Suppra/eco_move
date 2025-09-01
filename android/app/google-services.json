@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "435862323705",
+    "project_id": "ecomove-1a8e8",
+    "storage_bucket": "ecomove-1a8e8.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:435862323705:android:0238133ee2956bcd78bd28",
+        "android_client_info": {
+          "package_name": "com.example.eco_move"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBa0L30rJdwcXvHlgYEeP-N_4ZgVOv2D7A"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
