@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
-import '../services/auth_service.dart';
-import '../services/database_service.dart';
-import '../models/loan_model.dart';
-import 'stations_screen.dart';
-import 'loans_screen.dart';
-import 'statistics_screen.dart';
+import '../../../services/auth_service.dart';
+import '../../../services/database_service.dart';
+import '../../loans/models/loan_model.dart';
+import '../../stations/screens/stations_screen.dart';
+import '../../loans/screens/loans_screen.dart';
+import '../../statistics/screens/statistics_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
