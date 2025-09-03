@@ -16,6 +16,31 @@ class StationDetailScreen extends StatefulWidget {
 class _StationDetailScreenState extends State<StationDetailScreen> {
   final DatabaseService _databaseService = DatabaseService();
   final AuthService _authService = AuthService();
+  
+  // Cache para transportes y disponibilidad
+  List<TransportModel>? _cachedTransports;
+  Map<TransportType, int>? _cachedAvailability;
+  late Stream<List<TransportModel>> _transportStream;
+  
+  @override
+  void initState() {
+    super.initState();
+    _transportStream = _databaseService.getTransportsByStation(widget.station.id);
+    _loadInitialData();
+  }
+  
+  Future<void> _loadInitialData() async {
+    try {
+      final availability = await _databaseService.getStationAvailability(widget.station.id);
+      if (mounted) {
+        setState(() {
+          _cachedAvailability = availability;
+        });
+      }
+    } catch (e) {
+      print('Error loading station availability: $e');
+    }
+  }
 
   // Método para agregar nuevo transporte a la estación
   void _showAddTransportDialog() {
@@ -103,7 +128,8 @@ class _StationDetailScreenState extends State<StationDetailScreen> {
   // Método para realizar préstamo
   Future<void> _borrowTransport(TransportModel transport) async {
     try {
-      final currentUser = await _authService.currentUser.first;
+      // Usar el método cached para evitar streams excesivos
+      final currentUser = await _authService.getCurrentUserOnce();
       if (currentUser == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(
@@ -113,6 +139,8 @@ class _StationDetailScreenState extends State<StationDetailScreen> {
         );
         return;
       }
+
+      print('Usuario autenticado: ${currentUser.id}');
 
       // Verificar si el usuario ya tiene un préstamo activo
       final activeLoan = await _databaseService.getActiveLoan(currentUser.id);
@@ -125,6 +153,8 @@ class _StationDetailScreenState extends State<StationDetailScreen> {
         );
         return;
       }
+
+      print('Creando préstamo para usuario: ${currentUser.id}, transporte: ${transport.id}');
 
       await _databaseService.createLoan(
         userId: currentUser.id,
@@ -139,10 +169,20 @@ class _StationDetailScreenState extends State<StationDetailScreen> {
         ),
       );
     } catch (e) {
+      print('Error detallado al tomar transporte: $e');
+      
+      String errorMessage = 'Error al tomar el transporte';
+      if (e.toString().contains('permission-denied')) {
+        errorMessage = 'Sin permisos para realizar esta operación. Verifique las reglas de Firestore.';
+      } else if (e.toString().contains('network')) {
+        errorMessage = 'Error de conexión. Verifique su internet.';
+      }
+      
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error al tomar el transporte: $e'),
+          content: Text('$errorMessage: $e'),
           backgroundColor: Colors.red,
+          duration: const Duration(seconds: 5),
         ),
       );
     }
@@ -208,33 +248,64 @@ class _StationDetailScreenState extends State<StationDetailScreen> {
                       ],
                     ),
                     const SizedBox(height: 8),
-                    // Mostrar disponibilidad por tipo
-                    FutureBuilder<Map<TransportType, int>>(
-                      future: _databaseService.getStationAvailability(widget.station.id),
-                      builder: (context, snapshot) {
-                        if (snapshot.hasData) {
-                          final availability = snapshot.data!;
-                          return Row(
+                    // Mostrar disponibilidad por tipo (usar cache cuando esté disponible)
+                    _cachedAvailability != null
+                        ? Row(
                             mainAxisAlignment: MainAxisAlignment.spaceAround,
                             children: [
                               _buildAvailabilityItem(
                                 TransportType.bicycle,
-                                availability[TransportType.bicycle] ?? 0,
-                              ),
-                              _buildAvailabilityItem(
-                                TransportType.skateboard,
-                                availability[TransportType.skateboard] ?? 0,
+                                _cachedAvailability![TransportType.bicycle] ?? 0,
                               ),
                               _buildAvailabilityItem(
                                 TransportType.scooter,
-                                availability[TransportType.scooter] ?? 0,
+                                _cachedAvailability![TransportType.scooter] ?? 0,
+                              ),
+                              _buildAvailabilityItem(
+                                TransportType.skateboard,
+                                _cachedAvailability![TransportType.skateboard] ?? 0,
                               ),
                             ],
-                          );
-                        }
-                        return const Center(child: CircularProgressIndicator());
-                      },
-                    ),
+                          )
+                        : FutureBuilder<Map<TransportType, int>>(
+                            future: _databaseService.getStationAvailability(widget.station.id),
+                            builder: (context, snapshot) {
+                              if (snapshot.hasData) {
+                                final availability = snapshot.data!;
+                                // Actualizar cache
+                                WidgetsBinding.instance.addPostFrameCallback((_) {
+                                  if (mounted) {
+                                    setState(() {
+                                      _cachedAvailability = availability;
+                                    });
+                                  }
+                                });
+                                return Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                  children: [
+                                    _buildAvailabilityItem(
+                                      TransportType.bicycle,
+                                      availability[TransportType.bicycle] ?? 0,
+                                    ),
+                                    _buildAvailabilityItem(
+                                      TransportType.scooter,
+                                      availability[TransportType.scooter] ?? 0,
+                                    ),
+                                    _buildAvailabilityItem(
+                                      TransportType.skateboard,
+                                      availability[TransportType.skateboard] ?? 0,
+                                    ),
+                                  ],
+                                );
+                              }
+                              return const Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                                children: [
+                                  CircularProgressIndicator(),
+                                ],
+                              );
+                            },
+                          ),
                   ],
                 ),
               ),
@@ -262,9 +333,9 @@ class _StationDetailScreenState extends State<StationDetailScreen> {
             const SizedBox(height: 10),
             Expanded(
               child: StreamBuilder<List<TransportModel>>(
-                stream: _databaseService.getTransportsByStation(widget.station.id),
+                stream: _transportStream,
                 builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.waiting) {
+                  if (snapshot.connectionState == ConnectionState.waiting && _cachedTransports == null) {
                     return const Center(child: CircularProgressIndicator());
                   }
 
@@ -272,7 +343,21 @@ class _StationDetailScreenState extends State<StationDetailScreen> {
                     return Center(child: Text('Error: ${snapshot.error}'));
                   }
 
-                  final transports = snapshot.data ?? [];
+                  // Usar datos del stream si están disponibles, sino usar cache
+                  final transports = snapshot.data ?? _cachedTransports ?? [];
+                  
+                  // Actualizar cache cuando lleguen nuevos datos
+                  if (snapshot.hasData && snapshot.data != _cachedTransports) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (mounted) {
+                        setState(() {
+                          _cachedTransports = snapshot.data;
+                          // También actualizar la disponibilidad cuando cambien los transportes
+                          _loadInitialData();
+                        });
+                      }
+                    });
+                  }
 
                   if (transports.isEmpty) {
                     return const Center(

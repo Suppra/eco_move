@@ -113,28 +113,67 @@ flutter run
 - Gráficos de uso y gastos
 - Información detallada de rendimiento
 
-## 🏗️ Arquitectura del Proyecto
+## 🏗️ Arquitectura del Proyecto (MVC + Provider)
 
 ```
 lib/
-├── models/          # Modelos de datos
+├── controllers/          # Controladores (Lógica de negocio)
+│   ├── auth_controller.dart
+│   └── transport_controller.dart
+├── models/              # Modelos de datos
 │   ├── user_model.dart
 │   ├── station_model.dart
 │   ├── transport_model.dart
 │   └── loan_model.dart
-├── services/        # Servicios y lógica de negocio
+├── providers/           # Providers (Estado y Modelo)
+│   ├── user_provider.dart
+│   └── transport_provider.dart
+├── services/            # Servicios (Acceso a datos)
 │   ├── auth_service.dart
 │   ├── database_service.dart
 │   └── data_seeder.dart
-├── screens/         # Pantallas de la aplicación
+├── screens/             # Vistas de la aplicación
 │   ├── login_screen.dart
 │   ├── register_screen.dart
 │   ├── home_screen.dart
+│   ├── home_tab.dart
 │   ├── stations_screen.dart
 │   ├── station_detail_screen.dart
 │   ├── loans_screen.dart
 │   └── statistics_screen.dart
-└── main.dart        # Punto de entrada
+└── main.dart            # Punto de entrada con MultiProvider
+```
+
+### 📐 Patrón Arquitectónico
+
+**Modelo-Vista-Controlador (MVC) con Provider Pattern:**
+
+#### 🔧 **Modelo (Models + Providers + Services)**
+- **Models**: Definición de estructuras de datos (`UserModel`, `StationModel`, etc.)
+- **Providers**: Gestión de estado global con `ChangeNotifier`
+  - `UserProvider`: Estado de autenticación y préstamos del usuario
+  - `TransportProvider`: Estado de estaciones y transportes
+- **Services**: Acceso a datos (Firebase, APIs)
+  - `AuthService`: Autenticación con Firebase Auth
+  - `DatabaseService`: Operaciones con Firestore
+
+#### 🎨 **Vista (Screens)**
+- **Screens**: Widgets de interfaz de usuario
+- Utilizan `Consumer<Provider>` para escuchar cambios de estado
+- No contienen lógica de negocio, solo presentación
+
+#### 🎮 **Controlador (Controllers)**
+- **AuthController**: Maneja inicio/cierre de sesión y registro
+- **TransportController**: Maneja operaciones de transportes y estaciones
+- Coordinan entre las Vistas y el Modelo
+- Manejan validaciones y navegación
+
+### 🔄 Flujo de Datos
+
+```
+Vista → Controlador → Provider → Service → Firebase
+  ↑                                           ↓
+  ←←←←←← Estado actualizado ←←←←←←←←←←←←←←←←←←←←←
 ```
 
 ## 📊 Modelo de Datos

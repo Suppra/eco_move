@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import '../models/loan_model.dart';
 import '../models/transport_model.dart';
 import '../models/station_model.dart';
@@ -141,8 +142,8 @@ class _LoansScreenState extends State<LoansScreen> with SingleTickerProviderStat
           ],
         ),
       ),
-      body: StreamBuilder(
-        stream: _authService.currentUser,
+      body: FutureBuilder(
+        future: _authService.getCurrentUserOnce(),
         builder: (context, userSnapshot) {
           if (userSnapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator());
@@ -371,10 +372,7 @@ class _LoansScreenState extends State<LoansScreen> with SingleTickerProviderStat
             Row(
               children: [
                 Expanded(
-                  child: Text(
-                    'Tiempo transcurrido: ${_getElapsedTime(loan.startTime)}',
-                    style: const TextStyle(fontWeight: FontWeight.w500),
-                  ),
+                  child: ElapsedTimeWidget(startTime: loan.startTime),
                 ),
                 ElevatedButton(
                   onPressed: () => _returnTransport(loan),
@@ -493,18 +491,6 @@ class _LoansScreenState extends State<LoansScreen> with SingleTickerProviderStat
     return '${dateTime.day}/${dateTime.month}/${dateTime.year} ${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}';
   }
 
-  String _getElapsedTime(DateTime startTime) {
-    final elapsed = DateTime.now().difference(startTime);
-    final hours = elapsed.inHours;
-    final minutes = elapsed.inMinutes % 60;
-    
-    if (hours > 0) {
-      return '${hours}h ${minutes}m';
-    } else {
-      return '${minutes}m';
-    }
-  }
-
   String _getDuration(DateTime start, DateTime end) {
     final duration = end.difference(start);
     final hours = duration.inHours;
@@ -515,5 +501,67 @@ class _LoansScreenState extends State<LoansScreen> with SingleTickerProviderStat
     } else {
       return '${minutes}m';
     }
+  }
+}
+
+// Widget separado para mostrar tiempo transcurrido sin afectar el resto de la pantalla
+class ElapsedTimeWidget extends StatefulWidget {
+  final DateTime startTime;
+
+  const ElapsedTimeWidget({Key? key, required this.startTime}) : super(key: key);
+
+  @override
+  State<ElapsedTimeWidget> createState() => _ElapsedTimeWidgetState();
+}
+
+class _ElapsedTimeWidgetState extends State<ElapsedTimeWidget> {
+  Timer? _timer;
+  String _elapsedTime = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _updateElapsedTime();
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (mounted) {
+        _updateElapsedTime();
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    super.dispose();
+  }
+
+  void _updateElapsedTime() {
+    final elapsed = DateTime.now().difference(widget.startTime);
+    final hours = elapsed.inHours;
+    final minutes = elapsed.inMinutes % 60;
+    final seconds = elapsed.inSeconds % 60;
+    
+    String newTime;
+    if (hours > 0) {
+      newTime = '${hours}h ${minutes}m';
+    } else if (minutes > 0) {
+      newTime = '${minutes}m ${seconds}s';
+    } else {
+      newTime = '${seconds}s';
+    }
+    
+    if (newTime != _elapsedTime) {
+      setState(() {
+        _elapsedTime = newTime;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      'Tiempo transcurrido: $_elapsedTime',
+      style: const TextStyle(fontWeight: FontWeight.w500),
+    );
   }
 }

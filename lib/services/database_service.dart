@@ -243,49 +243,60 @@ class DatabaseService {
     return _firestore
         .collection('loans')
         .where('userId', isEqualTo: userId)
-        .orderBy('startTime', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => LoanModel.fromMap(doc.data(), doc.id))
-            .toList());
+        .map((snapshot) {
+          var loans = snapshot.docs
+              .map((doc) => LoanModel.fromMap(doc.data(), doc.id))
+              .toList();
+          // Ordenar en el cliente para evitar índices complejos
+          loans.sort((a, b) => b.startTime.compareTo(a.startTime));
+          return loans;
+        });
   }
 
   Future<List<LoanModel>> getUserLoansHistory(String userId) async {
     final snapshot = await _firestore
         .collection('loans')
         .where('userId', isEqualTo: userId)
-        .orderBy('startTime', descending: true)
         .get();
 
-    return snapshot.docs
+    var loans = snapshot.docs
         .map((doc) => LoanModel.fromMap(doc.data(), doc.id))
         .toList();
+    
+    // Ordenar en el cliente y filtrar solo los completados
+    loans.sort((a, b) => b.startTime.compareTo(a.startTime));
+    return loans.where((loan) => loan.endTime != null).toList();
   }
 
-  // Préstamos activos (sin finalizar)
+  // Préstamos activos (sin finalizar) - simplificado para evitar índices complejos
   Stream<List<LoanModel>> getActiveLoans(String userId) {
     return _firestore
         .collection('loans')
         .where('userId', isEqualTo: userId)
-        .where('endTime', isNull: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => LoanModel.fromMap(doc.data(), doc.id))
-            .toList());
+        .map((snapshot) {
+          // Filtrar en el cliente los préstamos activos
+          return snapshot.docs
+              .map((doc) => LoanModel.fromMap(doc.data(), doc.id))
+              .where((loan) => loan.endTime == null)
+              .toList();
+        });
   }
 
   Future<LoanModel?> getActiveLoan(String userId) async {
     final snapshot = await _firestore
         .collection('loans')
         .where('userId', isEqualTo: userId)
-        .where('endTime', isNull: true)
-        .limit(1)
         .get();
 
-    if (snapshot.docs.isNotEmpty) {
-      return LoanModel.fromMap(snapshot.docs.first.data(), snapshot.docs.first.id);
-    }
-    return null;
+    // Filtrar en el cliente para obtener el préstamo activo
+    final activeLoans = snapshot.docs
+        .map((doc) => LoanModel.fromMap(doc.data(), doc.id))
+        .where((loan) => loan.endTime == null)
+        .toList();
+
+    return activeLoans.isNotEmpty ? activeLoans.first : null;
   }
 
   // Gestión general de préstamos
