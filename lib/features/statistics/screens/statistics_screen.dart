@@ -9,9 +9,22 @@ class StatisticsScreen extends StatefulWidget {
   State<StatisticsScreen> createState() => _StatisticsScreenState();
 }
 
-class _StatisticsScreenState extends State<StatisticsScreen> {
+class _StatisticsScreenState extends State<StatisticsScreen> with SingleTickerProviderStateMixin {
   final DatabaseService _databaseService = DatabaseService();
   final AuthService _authService = AuthService();
+  late TabController _tabController;
+
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 2, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tabController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -20,8 +33,29 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
         title: const Text('Estadísticas'),
         backgroundColor: Colors.green,
         foregroundColor: Colors.white,
+        bottom: TabBar(
+          controller: _tabController,
+          labelColor: Colors.white,
+          unselectedLabelColor: Colors.white70,
+          indicatorColor: Colors.white,
+          tabs: const [
+            Tab(text: 'Mis Estadísticas', icon: Icon(Icons.person)),
+            Tab(text: 'Transferencias', icon: Icon(Icons.swap_horiz)),
+          ],
+        ),
       ),
-      body: StreamBuilder(
+      body: TabBarView(
+        controller: _tabController,
+        children: [
+          _buildUserStatistics(),
+          _buildTransferStatistics(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildUserStatistics() {
+    return StreamBuilder(
         stream: _authService.currentUser,
         builder: (context, userSnapshot) {
           if (userSnapshot.connectionState == ConnectionState.waiting) {
@@ -220,8 +254,7 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
             },
           );
         },
-      ),
-    );
+      );
   }
 
   Widget _buildStatCard(String title, String value, IconData icon, Color color) {
@@ -258,6 +291,229 @@ class _StatisticsScreenState extends State<StatisticsScreen> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildTransferStatistics() {
+    return FutureBuilder<Map<String, dynamic>>(
+      future: _databaseService.getStationTransferStats(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+
+        if (snapshot.hasError) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.error, size: 64, color: Colors.red),
+                const SizedBox(height: 16),
+                Text(
+                  'Error: ${snapshot.error}',
+                  style: const TextStyle(color: Colors.red),
+                ),
+              ],
+            ),
+          );
+        }
+
+        final stats = snapshot.data!;
+        final totalTransfers = stats['totalTransfers'] as int;
+        final transfersByRoute = stats['transfersByRoute'] as Map<String, int>;
+        final stationActivity = stats['stationActivity'] as Map<String, int>;
+
+        return SingleChildScrollView(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Resumen general
+              Card(
+                color: Colors.blue.shade50,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.swap_horiz, color: Colors.blue.shade700),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Intercambio de Inventario',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blue.shade700,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 16),
+                      _buildDetailRow('Total de transferencias:', '$totalTransfers'),
+                      const SizedBox(height: 8),
+                      const Text(
+                        '🔄 Las transferencias permiten que los transportes se muevan automáticamente entre estaciones cuando los usuarios los devuelven en una estación diferente.',
+                        style: TextStyle(color: Colors.grey, fontSize: 14),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+
+              // Rutas más populares
+              if (transfersByRoute.isNotEmpty) ...[
+                const Text(
+                  'Rutas de Transferencia',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 10),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Transferencias por ruta:',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 12),
+                        ...transfersByRoute.entries.map((entry) {
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 4),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.route, size: 20, color: Colors.grey),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text(entry.key),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.green.shade100,
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(
+                                    '${entry.value}',
+                                    style: TextStyle(
+                                      color: Colors.green.shade700,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+              ],
+
+              // Actividad por estación
+              if (stationActivity.isNotEmpty) ...[
+                const Text(
+                  'Actividad por Estación',
+                  style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 10),
+                Card(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'Total de préstamos por estación:',
+                          style: TextStyle(fontWeight: FontWeight.bold),
+                        ),
+                        const SizedBox(height: 12),
+                        ...stationActivity.entries.map((entry) {
+                          return Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 4),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.location_on, size: 20, color: Colors.grey),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: Text('Estación ${entry.key}'),
+                                ),
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: Colors.orange.shade100,
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Text(
+                                    '${entry.value}',
+                                    style: TextStyle(
+                                      color: Colors.orange.shade700,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }).toList(),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+
+              // Información explicativa
+              const SizedBox(height: 20),
+              Card(
+                color: Colors.green.shade50,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(Icons.info_outline, color: Colors.green.shade700),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Cómo Funciona',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green.shade700,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                      const Text(
+                        '• Cuando tomas un transporte de la Estación A y lo devuelves en la Estación B, el inventario se actualiza automáticamente.',
+                        style: TextStyle(fontSize: 14),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        '• El transporte sale del inventario de la Estación A y entra al inventario de la Estación B.',
+                        style: TextStyle(fontSize: 14),
+                      ),
+                      const SizedBox(height: 8),
+                      const Text(
+                        '• Esto permite una distribución dinámica de transportes según la demanda.',
+                        style: TextStyle(fontSize: 14),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 

@@ -140,6 +140,35 @@ class TransportProvider with ChangeNotifier {
     return _stationTransports[stationId]?.where((t) => t.isAvailable).toList() ?? [];
   }
 
+  // Obtener resumen de inventario por estación
+  Map<String, Map<TransportType, int>> getStationInventorySummary() {
+    Map<String, Map<TransportType, int>> summary = {};
+    
+    for (var station in _stations) {
+      Map<TransportType, int> stationInventory = {
+        TransportType.bicycle: 0,
+        TransportType.skateboard: 0,
+        TransportType.scooter: 0,
+      };
+      
+      final stationTransports = _stationTransports[station.id] ?? [];
+      for (var transport in stationTransports) {
+        if (transport.isAvailable) {
+          stationInventory[transport.type] = (stationInventory[transport.type] ?? 0) + 1;
+        }
+      }
+      
+      summary[station.id] = stationInventory;
+    }
+    
+    return summary;
+  }
+
+  // Verificar si hay movimiento de inventario entre estaciones
+  bool hasInventoryMovement(String fromStationId, String toStationId) {
+    return fromStationId != toStationId;
+  }
+
   // Limpiar selecciones
   void clearSelections() {
     _selectedTransport = null;

@@ -218,6 +218,17 @@ class DatabaseService {
 
     final cost = calculateCost(transport.type, minutes);
 
+    // Verificar si es un movimiento entre estaciones diferentes
+    final isStationTransfer = loan.startStationId != endStationId;
+    
+    if (isStationTransfer) {
+      print('🔄 TRANSFERENCIA DE INVENTARIO:');
+      print('   Transporte: ${transport.name} (${transport.type.name})');
+      print('   Desde estación: ${loan.startStationId}');
+      print('   Hacia estación: $endStationId');
+      print('   ✅ Inventario actualizado automáticamente');
+    }
+
     // Actualizar el préstamo con la información de devolución
     final updatedLoan = LoanModel(
       id: loan.id,
@@ -233,6 +244,9 @@ class DatabaseService {
     await _firestore.collection('loans').doc(loanId).update(updatedLoan.toMap());
     
     // Marcar el transporte como disponible en la nueva estación
+    // ESTO ACTUALIZA AUTOMÁTICAMENTE EL INVENTARIO:
+    // - El transporte sale del inventario de la estación origen (loan.startStationId)
+    // - El transporte entra al inventario de la estación destino (endStationId)
     await updateTransportAvailability(loan.transportId, true, endStationId);
 
     return cost;
@@ -334,6 +348,43 @@ class DatabaseService {
       'totalMinutes': totalMinutes,
       'averageTripDuration': totalTrips > 0 ? totalMinutes / totalTrips : 0,
       'averageCost': totalTrips > 0 ? totalCost / totalTrips : 0,
+    };
+  }
+
+  // Estadísticas de transferencias entre estaciones
+  Future<Map<String, dynamic>> getStationTransferStats() async {
+    final loansSnapshot = await _firestore
+        .collection('loans')
+        .where('endTime', isNotEqualTo: null)
+        .get();
+
+    int totalTransfers = 0;
+    Map<String, int> transfersByRoute = {};
+    Map<String, int> stationActivity = {};
+
+    for (var doc in loansSnapshot.docs) {
+      final loan = LoanModel.fromMap(doc.data(), doc.id);
+      
+      // Contar actividad por estación de origen
+      stationActivity[loan.startStationId] = (stationActivity[loan.startStationId] ?? 0) + 1;
+      
+      if (loan.endStationId != null) {
+        // Contar actividad por estación de destino
+        stationActivity[loan.endStationId!] = (stationActivity[loan.endStationId!] ?? 0) + 1;
+        
+        // Si es transferencia entre estaciones diferentes
+        if (loan.startStationId != loan.endStationId) {
+          totalTransfers++;
+          final route = '${loan.startStationId} → ${loan.endStationId}';
+          transfersByRoute[route] = (transfersByRoute[route] ?? 0) + 1;
+        }
+      }
+    }
+
+    return {
+      'totalTransfers': totalTransfers,
+      'transfersByRoute': transfersByRoute,
+      'stationActivity': stationActivity,
     };
   }
 }
