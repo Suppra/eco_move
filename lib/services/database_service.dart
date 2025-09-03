@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../models/transport_model.dart';
-import '../models/station_model.dart';
-import '../models/loan_model.dart';
-import '../models/user_model.dart';
+import '../features/stations/models/transport_model.dart';
+import '../features/stations/models/station_model.dart';
+import '../features/loans/models/loan_model.dart';
+import '../features/auth/models/user_model.dart';
 
 class DatabaseService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;

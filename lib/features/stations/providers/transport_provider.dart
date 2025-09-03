@@ -1,7 +1,7 @@
 import 'package:flutter/foundation.dart';
 import '../models/transport_model.dart';
 import '../models/station_model.dart';
-import '../services/database_service.dart';
+import '../../../services/database_service.dart';
 
 class TransportProvider with ChangeNotifier {
   final DatabaseService _databaseService = DatabaseService();

@@ -3,10 +3,10 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:provider/provider.dart';
 import 'firebase_options.dart';
 import 'services/data_seeder.dart';
-import 'providers/user_provider.dart';
-import 'providers/transport_provider.dart';
-import 'screens/login_screen.dart';
-import 'screens/home_screen.dart';
+import 'features/auth/providers/user_provider.dart';
+import 'features/stations/providers/transport_provider.dart';
+import 'features/auth/screens/login_screen.dart';
+import 'features/home/screens/home_screen.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();

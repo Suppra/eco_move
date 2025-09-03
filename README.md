@@ -190,9 +190,11 @@ Vista → Controlador → Provider → Service → Firebase
 ### Préstamo
 - ID, usuario, transporte, tiempo inicio/fin, estación origen/destino, costo
 
-## 👨‍💻 Autor
+## 👨‍💻 Autores
 
-**Cristian** - Proyecto de Programación Orientada a Objetos
+**Cristian Javier Cañate Yepes** - Proyecto de Patrones de Diseño
+**Henry Pertuz** - Proyecto de Patrones de Diseño
+**Jose Mojica** - Proyecto de Patrones de Diseño
 
 ---
 

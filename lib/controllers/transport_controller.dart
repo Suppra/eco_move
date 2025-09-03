@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../providers/transport_provider.dart';
-import '../providers/user_provider.dart';
-import '../models/transport_model.dart';
-import '../models/station_model.dart';
+import '../features/stations/providers/transport_provider.dart';
+import '../features/auth/providers/user_provider.dart';
+import '../features/stations/models/transport_model.dart';
+import '../features/stations/models/station_model.dart';
 
 class TransportController {
   final TransportProvider transportProvider;

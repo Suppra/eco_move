@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import '../models/loan_model.dart';
-import '../models/transport_model.dart';
-import '../models/station_model.dart';
-import '../services/database_service.dart';
-import '../services/auth_service.dart';
+import '../../stations/models/transport_model.dart';
+import '../../stations/models/station_model.dart';
+import '../../../services/database_service.dart';
+import '../../../services/auth_service.dart';
 
 class LoansScreen extends StatefulWidget {
   const LoansScreen({Key? key}) : super(key: key);

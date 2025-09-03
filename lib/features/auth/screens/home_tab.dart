@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
-import '../services/auth_service.dart';
-import '../services/database_service.dart';
-import '../models/loan_model.dart';
+import '../../../services/auth_service.dart';
+import '../../../services/database_service.dart';
+import '../../loans/models/loan_model.dart';
 import '../models/user_model.dart';
-import 'loans_screen.dart';
-import 'stations_screen.dart';
-import 'statistics_screen.dart';
+import '../../loans/screens/loans_screen.dart';
+import '../../stations/screens/stations_screen.dart';
+import '../../statistics/screens/statistics_screen.dart';
 
 class HomeTab extends StatefulWidget {
   const HomeTab({Key? key}) : super(key: key);
@@ -18,7 +18,6 @@ class HomeTab extends StatefulWidget {
 class _HomeTabState extends State<HomeTab> {
   final AuthService _authService = AuthService();
   final DatabaseService _databaseService = DatabaseService();
-  Timer? _timer;
   UserModel? _cachedUser;
   LoanModel? _cachedActiveLoan;
 
@@ -49,41 +48,11 @@ class _HomeTabState extends State<HomeTab> {
     _databaseService.getActiveLoans(_cachedUser!.id).listen((loans) {
       if (mounted) {
         final activeLoan = loans.isNotEmpty ? loans.first : null;
-        final hadLoan = _cachedActiveLoan != null;
-        final hasLoan = activeLoan != null;
-        
         setState(() {
           _cachedActiveLoan = activeLoan;
         });
-        
-        if (hasLoan && !hadLoan) {
-          _startTimer();
-        } else if (!hasLoan && hadLoan) {
-          _stopTimer();
-        }
       }
     });
-  }
-
-  void _startTimer() {
-    _timer?.cancel();
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (mounted && _cachedActiveLoan != null) {
-        setState(() {
-          // Solo actualizar el tiempo
-        });
-      }
-    });
-  }
-
-  void _stopTimer() {
-    _timer?.cancel();
-  }
-
-  @override
-  void dispose() {
-    _timer?.cancel();
-    super.dispose();
   }
 
   @override
@@ -218,7 +187,10 @@ class _HomeTabState extends State<HomeTab> {
                       ),
                       const SizedBox(height: 8),
                       Text('Inicio: ${_formatDateTime(_cachedActiveLoan!.startTime)}'),
-                      Text('Tiempo: ${_getElapsedTime(_cachedActiveLoan!.startTime)}'),
+                      ElapsedTimeWidget(
+                        startTime: _cachedActiveLoan!.startTime,
+                        style: const TextStyle(fontSize: 14),
+                      ),
                       const SizedBox(height: 12),
                       SizedBox(
                         width: double.infinity,
@@ -395,19 +367,66 @@ class _HomeTabState extends State<HomeTab> {
   String _formatDateTime(DateTime dateTime) {
     return '${dateTime.day}/${dateTime.month}/${dateTime.year} ${dateTime.hour}:${dateTime.minute.toString().padLeft(2, '0')}';
   }
+}
 
-  String _getElapsedTime(DateTime startTime) {
-    final elapsed = DateTime.now().difference(startTime);
-    final hours = elapsed.inHours;
-    final minutes = elapsed.inMinutes % 60;
-    final seconds = elapsed.inSeconds % 60;
-    
-    if (hours > 0) {
-      return '${hours}h ${minutes}m';
-    } else if (minutes > 0) {
-      return '${minutes}m ${seconds}s';
-    } else {
-      return '${seconds}s';
+// Widget optimizado para mostrar tiempo transcurrido sin rebuilds innecesarios
+class ElapsedTimeWidget extends StatefulWidget {
+  final DateTime startTime;
+  final TextStyle? style;
+
+  const ElapsedTimeWidget({
+    Key? key,
+    required this.startTime,
+    this.style,
+  }) : super(key: key);
+
+  @override
+  State<ElapsedTimeWidget> createState() => _ElapsedTimeWidgetState();
+}
+
+class _ElapsedTimeWidgetState extends State<ElapsedTimeWidget> {
+  late Timer _timer;
+  String _timeText = '';
+
+  @override
+  void initState() {
+    super.initState();
+    _updateTime();
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) => _updateTime());
+  }
+
+  void _updateTime() {
+    if (mounted) {
+      final elapsed = DateTime.now().difference(widget.startTime);
+      final hours = elapsed.inHours;
+      final minutes = elapsed.inMinutes % 60;
+      final seconds = elapsed.inSeconds % 60;
+
+      final newTimeText = hours > 0
+          ? '${hours}h ${minutes}m ${seconds}s'
+          : minutes > 0
+              ? '${minutes}m ${seconds}s'
+              : '${seconds}s';
+
+      if (_timeText != newTimeText) {
+        setState(() {
+          _timeText = newTimeText;
+        });
+      }
     }
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      'Tiempo: $_timeText',
+      style: widget.style,
+    );
   }
 }
