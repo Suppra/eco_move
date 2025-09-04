@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../services/auth_service.dart';
+import 'package:provider/provider.dart';
+import '../providers/user_provider.dart';
 import '../../../services/database_service.dart';
 
 class RegisterScreen extends StatefulWidget {
@@ -11,7 +12,6 @@ class RegisterScreen extends StatefulWidget {
 
 class _RegisterScreenState extends State<RegisterScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _authService = AuthService();
   final _databaseService = DatabaseService();
 
   final _nameController = TextEditingController();
@@ -39,18 +39,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
     setState(() => _isLoading = true);
 
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
+
     try {
-      final user = await _authService.createUserWithEmailAndPassword(
+      final success = await userProvider.signUp(
         _emailController.text.trim(),
         _passwordController.text,
         _nameController.text.trim(),
         _documentController.text.trim(),
       );
 
-      if (user != null) {
-        // Registrar usuario en la base de datos
-        await _databaseService.registerUser(user);
-
+      if (success) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -63,8 +62,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Error al registrar usuario'),
+            SnackBar(
+              content: Text(userProvider.error ?? 'Error al registrar usuario'),
               backgroundColor: Colors.red,
             ),
           );

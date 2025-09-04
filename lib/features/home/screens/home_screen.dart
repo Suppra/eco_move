@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
+import 'package:provider/provider.dart';
 import '../../../services/auth_service.dart';
 import '../../../services/database_service.dart';
 import '../../loans/models/loan_model.dart';
 import '../../auth/models/user_model.dart';
+import '../../auth/providers/user_provider.dart';
 import '../../loans/screens/loans_screen.dart';
 import '../../stations/screens/stations_screen.dart';
 import '../../statistics/screens/statistics_screen.dart';
@@ -101,7 +103,8 @@ class _HomeTabState extends State<HomeTab> {
               );
 
               if (shouldLogout == true) {
-                await _authService.signOut();
+                final userProvider = Provider.of<UserProvider>(context, listen: false);
+                await userProvider.signOut();
               }
             },
           ),

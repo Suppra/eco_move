@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../models/user_model.dart';
 import '../../loans/models/loan_model.dart';
 import '../../../services/auth_service.dart';
@@ -13,6 +14,38 @@ class UserProvider with ChangeNotifier {
   List<LoanModel> _loanHistory = [];
   bool _isLoading = false;
   String? _error;
+
+  UserProvider() {
+    // Listen to Firebase auth state changes
+    FirebaseAuth.instance.authStateChanges().listen((firebaseUser) async {
+      if (firebaseUser != null) {
+        // User logged in - load user data
+        await _loadUserFromFirebase(firebaseUser);
+      } else {
+        // User logged out - clear data
+        _user = null;
+        _activeLoans = [];
+        _loanHistory = [];
+        _error = null;
+        notifyListeners();
+      }
+    });
+  }
+
+  Future<void> _loadUserFromFirebase(User firebaseUser) async {
+    try {
+      final currentUser = await _authService.getCurrentUserOnce();
+      if (currentUser != null) {
+        _user = currentUser;
+        await _loadUserLoans();
+        _error = null;
+        notifyListeners();
+      }
+    } catch (e) {
+      _error = 'Error al cargar usuario: $e';
+      notifyListeners();
+    }
+  }
 
   // Getters
   UserModel? get user => _user;

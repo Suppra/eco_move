@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../services/auth_service.dart';
+import 'package:provider/provider.dart';
+import '../providers/user_provider.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -28,18 +29,19 @@ class _LoginScreenState extends State<LoginScreen> {
 
     setState(() => _isLoading = true);
 
-    final authService = AuthService();
+    final userProvider = Provider.of<UserProvider>(context, listen: false);
 
     try {
-      final user = await authService.signInWithEmailAndPassword(
+      final success = await userProvider.signIn(
         _emailController.text.trim(),
         _passwordController.text,
       );
-      if (user == null) {
+      
+      if (!success) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text(
-              'Error al iniciar sesión. Verifique sus credenciales.',
+              userProvider.error ?? 'Error al iniciar sesión. Verifique sus credenciales.',
             ),
             backgroundColor: Colors.red,
           ),
