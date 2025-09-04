@@ -6,7 +6,7 @@ import 'services/data_seeder.dart';
 import 'features/auth/providers/user_provider.dart';
 import 'features/stations/providers/transport_provider.dart';
 import 'features/auth/screens/login_screen.dart';
-import 'features/home/screens/home_screen.dart';
+import 'shared/widgets/menu_home.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -134,7 +134,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
         // Si hay usuario, ir a HomeScreen
         if (userProvider.isAuthenticated) {
-          return const HomeScreen();
+          return const MenuHome();
         }
 
         // Si no hay usuario, ir a LoginScreen

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../features/auth/providers/user_provider.dart';
+import '../providers/user_provider.dart';
 
 class AuthController {
   final UserProvider userProvider;
