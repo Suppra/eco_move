@@ -285,7 +285,7 @@ class _HomeTabState extends State<HomeTab> {
                   'Tarifas y ayuda',
                   Icons.info_outline,
                   Colors.teal,
-                  0, // Navigate to Home tab
+                  -1, // Special case for information dialog
                 ),
               ],
             ),
@@ -300,19 +300,24 @@ class _HomeTabState extends State<HomeTab> {
     String subtitle,
     IconData icon,
     Color color,
-    int targetIndex, // Pass the target tab index
+    int targetIndex, // Pass the target tab index, -1 for special actions
   ) {
     return Card(
       elevation: 4,
       child: InkWell(
         onTap: () {
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(
-              builder: (context) => MenuHome(initialIndex: targetIndex),
-            ),
-            (route) => false, // Remove all previous routes
-          );
+          if (targetIndex == -1) {
+            // Special case for information dialog
+            _showInfoDialog();
+          } else {
+            Navigator.pushAndRemoveUntil(
+              context,
+              MaterialPageRoute(
+                builder: (context) => MenuHome(initialIndex: targetIndex),
+              ),
+              (route) => false, // Remove all previous routes
+            );
+          }
         },
         borderRadius: BorderRadius.circular(12),
         child: Padding(

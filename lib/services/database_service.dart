@@ -353,6 +353,15 @@ class DatabaseService {
 
   // Estadísticas de transferencias entre estaciones
   Future<Map<String, dynamic>> getStationTransferStats() async {
+    // Obtener todas las estaciones primero para mapear IDs a nombres
+    final stationsSnapshot = await _firestore.collection('stations').get();
+    Map<String, String> stationIdToName = {};
+    
+    for (var doc in stationsSnapshot.docs) {
+      final stationData = doc.data();
+      stationIdToName[doc.id] = stationData['name'] ?? doc.id;
+    }
+
     final loansSnapshot = await _firestore
         .collection('loans')
         .where('endTime', isNotEqualTo: null)
@@ -365,17 +374,23 @@ class DatabaseService {
     for (var doc in loansSnapshot.docs) {
       final loan = LoanModel.fromMap(doc.data(), doc.id);
       
-      // Contar actividad por estación de origen
-      stationActivity[loan.startStationId] = (stationActivity[loan.startStationId] ?? 0) + 1;
+      // Obtener nombres de estaciones
+      final startStationName = stationIdToName[loan.startStationId] ?? loan.startStationId;
+      final endStationName = loan.endStationId != null 
+          ? stationIdToName[loan.endStationId!] ?? loan.endStationId!
+          : null;
       
-      if (loan.endStationId != null) {
-        // Contar actividad por estación de destino
-        stationActivity[loan.endStationId!] = (stationActivity[loan.endStationId!] ?? 0) + 1;
+      // Contar actividad por estación de origen (usando nombres)
+      stationActivity[startStationName] = (stationActivity[startStationName] ?? 0) + 1;
+      
+      if (loan.endStationId != null && endStationName != null) {
+        // Contar actividad por estación de destino (usando nombres)
+        stationActivity[endStationName] = (stationActivity[endStationName] ?? 0) + 1;
         
         // Si es transferencia entre estaciones diferentes
         if (loan.startStationId != loan.endStationId) {
           totalTransfers++;
-          final route = '${loan.startStationId} → ${loan.endStationId}';
+          final route = '$startStationName → $endStationName';
           transfersByRoute[route] = (transfersByRoute[route] ?? 0) + 1;
         }
       }

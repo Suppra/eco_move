@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../services/database_service.dart';
 import '../../../services/auth_service.dart';
+import '../../auth/providers/user_provider.dart';
 
 class StatisticsScreen extends StatefulWidget {
   const StatisticsScreen({Key? key}) : super(key: key);
@@ -55,14 +57,13 @@ class _StatisticsScreenState extends State<StatisticsScreen> with SingleTickerPr
   }
 
   Widget _buildUserStatistics() {
-    return StreamBuilder(
-        stream: _authService.currentUser,
-        builder: (context, userSnapshot) {
-          if (userSnapshot.connectionState == ConnectionState.waiting) {
+    return Consumer<UserProvider>(
+        builder: (context, userProvider, child) {
+          if (userProvider.isLoading) {
             return const Center(child: CircularProgressIndicator());
           }
 
-          final user = userSnapshot.data;
+          final user = userProvider.user;
           if (user == null) {
             return const Center(
               child: Column(
