@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:provider/provider.dart';
-import '../../../services/auth_service.dart';
-import '../../../services/database_service.dart';
-import '../../loans/models/loan_model.dart';
-import '../../auth/models/user_model.dart';
-import '../../auth/providers/user_provider.dart';
-import '../../loans/screens/loans_screen.dart';
-import '../../stations/screens/stations_screen.dart';
-import '../../statistics/screens/statistics_screen.dart';
-import '../../../shared/widgets/menu_home.dart';
+import '../services/auth_service.dart';
+import '../services/database_service.dart';
+import '../models/loan_model.dart';
+import '../models/user_model.dart';
+import '../providers/user_provider.dart';
+import 'loans_screen.dart';
+import 'stations_screen.dart';
+import 'statistics_screen.dart';
+import '../widgets/menu_home.dart';
 
 class HomeTab extends StatefulWidget {
   const HomeTab({Key? key}) : super(key: key);

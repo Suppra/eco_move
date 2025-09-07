@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import '../../features/home/screens/home_screen.dart';
-import '../../features/stations/screens/stations_screen.dart';
-import '../../features/loans/screens/loans_screen.dart';
-import '../../features/statistics/screens/statistics_screen.dart';
+import '../views/home_screen.dart';
+import '../views/stations_screen.dart';
+import '../views/loans_screen.dart';
+import '../views/statistics_screen.dart';
 
 class MenuHome extends StatefulWidget {
   final int initialIndex; // Add this parameter

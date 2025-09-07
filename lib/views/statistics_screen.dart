@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../services/database_service.dart';
-import '../../../services/auth_service.dart';
-import '../../auth/providers/user_provider.dart';
+import '../services/database_service.dart';
+import '../services/auth_service.dart';
+import '../providers/user_provider.dart';
 
 class StatisticsScreen extends StatefulWidget {
   const StatisticsScreen({Key? key}) : super(key: key);

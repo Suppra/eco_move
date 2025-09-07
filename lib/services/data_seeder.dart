@@ -1,5 +1,5 @@
-import '../features/stations/models/station_model.dart';
-import '../features/stations/models/transport_model.dart';
+import '../models/station_model.dart';
+import '../models/transport_model.dart';
 import 'database_service.dart';
 
 class DataSeeder {

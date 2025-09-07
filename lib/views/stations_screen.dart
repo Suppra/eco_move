@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/station_model.dart';
 import '../models/transport_model.dart';
-import '../../../services/database_service.dart';
+import '../services/database_service.dart';
 import 'station_detail_screen.dart';
 
 class StationsScreen extends StatefulWidget {
