@@ -134,11 +134,13 @@ class UserProvider with ChangeNotifier {
 
   // Cerrar sesión
   Future<void> signOut() async {
+    _setLoading(true);
     await _authService.signOut();
     _user = null;
     _activeLoans = [];
     _loanHistory = [];
     _error = null;
+    _setLoading(false);
     notifyListeners();
   }
 

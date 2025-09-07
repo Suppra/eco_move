@@ -133,7 +133,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
         }
 
         // Si hay usuario, ir a HomeScreen
-        if (userProvider.isAuthenticated) {
+        if (userProvider.isAuthenticated && userProvider.user != null) {
           return const MenuHome();
         }
 
