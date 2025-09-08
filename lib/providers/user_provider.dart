@@ -4,6 +4,7 @@ import '../models/user_model.dart';
 import '../models/loan_model.dart';
 import '../services/auth_service.dart';
 import '../services/database_service.dart';
+import '../utils/auth_error_messages.dart';
 
 class UserProvider with ChangeNotifier {
   final AuthService _authService = AuthService();
@@ -106,6 +107,8 @@ class UserProvider with ChangeNotifier {
         return true;
       }
       _error = 'Credenciales incorrectas';
+    } on FirebaseAuthException catch (e) {
+      _error = AuthErrorMessages.getLoginErrorMessage(e.code);
     } catch (e) {
       _error = 'Error al iniciar sesión: $e';
     }
@@ -125,6 +128,8 @@ class UserProvider with ChangeNotifier {
         return true;
       }
       _error = 'Error al crear cuenta';
+    } on FirebaseAuthException catch (e) {
+      _error = AuthErrorMessages.getRegisterErrorMessage(e.code);
     } catch (e) {
       _error = 'Error al registrarse: $e';
     }

@@ -26,7 +26,7 @@ android {
         applicationId = "com.example.eco_move"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdkVersion(23)
+        minSdkVersion(24)  // Actualizado para compatibilidad con geolocator
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName

@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
+import '../services/preferences_service.dart';
+import '../utils/validators.dart';
+import '../utils/theme_utils.dart';
 import 'register_screen.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -16,6 +19,25 @@ class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _passwordController = TextEditingController();
   bool _isLoading = false;
   bool _isPasswordVisible = false;
+  bool _rememberEmail = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRememberedEmail();
+  }
+
+  void _loadRememberedEmail() async {
+    final rememberedEmail = await PreferencesService.getRememberedEmail();
+    final shouldRemember = await PreferencesService.shouldRememberEmail();
+    
+    if (rememberedEmail != null) {
+      setState(() {
+        _emailController.text = rememberedEmail;
+        _rememberEmail = shouldRemember;
+      });
+    }
+  }
 
   @override
   void dispose() {
@@ -37,24 +59,27 @@ class _LoginScreenState extends State<LoginScreen> {
         _passwordController.text,
       );
       
-      if (!success) {
+      if (success) {
+        // Guardar email si está marcado "recordar"
+        if (_rememberEmail) {
+          await PreferencesService.saveRememberedEmail(_emailController.text.trim());
+        } else {
+          await PreferencesService.clearRememberedEmail();
+        }
+      } else if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              userProvider.error ?? 'Error al iniciar sesión. Verifique sus credenciales.',
-            ),
-            backgroundColor: Colors.red,
+          ThemeUtils.errorSnackBar(
+            userProvider.error ?? 'Error al iniciar sesión. Verifique sus credenciales.',
           ),
         );
       }
       // Si el login es exitoso, el AuthWrapper se encargará de la navegación
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Error: ${e.toString()}'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          ThemeUtils.errorSnackBar('Error: ${e.toString()}'),
+        );
+      }
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -93,17 +118,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.email),
                 ),
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'El correo es obligatorio';
-                  }
-                  if (!RegExp(
-                    r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                  ).hasMatch(value)) {
-                    return 'Ingrese un correo válido';
-                  }
-                  return null;
-                },
+                validator: Validators.validateEmail,
               ),
               const SizedBox(height: 16),
 
@@ -134,6 +149,29 @@ class _LoginScreenState extends State<LoginScreen> {
                   }
                   return null;
                 },
+              ),
+              const SizedBox(height: 16),
+
+              // Checkbox para recordar email
+              Row(
+                children: [
+                  Checkbox(
+                    value: _rememberEmail,
+                    onChanged: (value) {
+                      setState(() {
+                        _rememberEmail = value ?? false;
+                      });
+                    },
+                    activeColor: Colors.green,
+                  ),
+                  const Text(
+                    'Recordar mi correo electrónico',
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ],
               ),
               const SizedBox(height: 24),
 

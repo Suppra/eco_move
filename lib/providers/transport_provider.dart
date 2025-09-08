@@ -14,14 +14,20 @@ class TransportProvider with ChangeNotifier {
   StationModel? _selectedStation;
   bool _isLoading = false;
   String? _error;
+  
+  // Filtros
+  TransportType? _selectedFilter;
+  List<TransportModel> _filteredTransports = [];
 
   // Getters
   List<TransportModel> get transports => _transports;
+  List<TransportModel> get filteredTransports => _filteredTransports.isNotEmpty ? _filteredTransports : _transports;
   List<StationModel> get stations => _stations;
   Map<String, List<TransportModel>> get stationTransports => _stationTransports;
   Map<TransportType, int> get stationAvailability => _stationAvailability;
   TransportModel? get selectedTransport => _selectedTransport;
   StationModel? get selectedStation => _selectedStation;
+  TransportType? get selectedFilter => _selectedFilter;
   bool get isLoading => _isLoading;
   String? get error => _error;
 
@@ -174,6 +180,34 @@ class TransportProvider with ChangeNotifier {
     _selectedTransport = null;
     _selectedStation = null;
     notifyListeners();
+  }
+
+  // Filtrar transportes por tipo
+  void filterTransportsByType(TransportType? type) {
+    _selectedFilter = type;
+    
+    if (type == null) {
+      _filteredTransports = [];
+    } else {
+      _filteredTransports = _transports.where((transport) => transport.type == type).toList();
+    }
+    
+    notifyListeners();
+  }
+
+  // Limpiar filtros
+  void clearFilters() {
+    _selectedFilter = null;
+    _filteredTransports = [];
+    notifyListeners();
+  }
+
+  // Obtener transportes disponibles por tipo en una estación específica
+  List<TransportModel> getAvailableTransportsByTypeInStation(String stationId, TransportType type) {
+    final stationTransports = _stationTransports[stationId] ?? [];
+    return stationTransports.where((transport) => 
+      transport.type == type && transport.isAvailable
+    ).toList();
   }
 
   void _setLoading(bool loading) {

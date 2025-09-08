@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/user_provider.dart';
 import '../services/database_service.dart';
+import '../utils/validators.dart';
+import '../utils/theme_utils.dart';
 
 class RegisterScreen extends StatefulWidget {
   const RegisterScreen({Key? key}) : super(key: key);
@@ -52,30 +54,21 @@ class _RegisterScreenState extends State<RegisterScreen> {
       if (success) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('Usuario registrado exitosamente'),
-              backgroundColor: Colors.green,
-            ),
+            ThemeUtils.successSnackBar('Usuario registrado exitosamente'),
           );
           Navigator.pop(context);
         }
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(userProvider.error ?? 'Error al registrar usuario'),
-              backgroundColor: Colors.red,
-            ),
+            ThemeUtils.errorSnackBar(userProvider.error ?? 'Error al registrar usuario'),
           );
         }
       }
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Error: ${e.toString()}'),
-            backgroundColor: Colors.red,
-          ),
+          ThemeUtils.errorSnackBar('Error: ${e.toString()}'),
         );
       }
     } finally {
@@ -123,15 +116,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     border: OutlineInputBorder(),
                     prefixIcon: Icon(Icons.person),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'El nombre es obligatorio';
-                    }
-                    if (value.length < 2) {
-                      return 'El nombre debe tener al menos 2 caracteres';
-                    }
-                    return null;
-                  },
+                  validator: Validators.validateName,
                 ),
                 const SizedBox(height: 16),
 
@@ -144,17 +129,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     border: OutlineInputBorder(),
                     prefixIcon: Icon(Icons.email),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'El correo es obligatorio';
-                    }
-                    if (!RegExp(
-                      r'^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$',
-                    ).hasMatch(value)) {
-                      return 'Ingrese un correo válido';
-                    }
-                    return null;
-                  },
+                  validator: Validators.validateEmail,
                 ),
                 const SizedBox(height: 16),
 
@@ -166,16 +141,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     labelText: 'Número de Documento',
                     border: OutlineInputBorder(),
                     prefixIcon: Icon(Icons.credit_card),
+                    hintText: 'Ej: 12345678',
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'El documento es obligatorio';
-                    }
-                    if (value.length < 6) {
-                      return 'El documento debe tener al menos 6 dígitos';
-                    }
-                    return null;
-                  },
+                  validator: Validators.validateDocument,
                 ),
                 const SizedBox(height: 16),
 
@@ -200,15 +168,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       },
                     ),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'La contraseña es obligatoria';
-                    }
-                    if (value.length < 6) {
-                      return 'La contraseña debe tener al menos 6 caracteres';
-                    }
-                    return null;
-                  },
+                  validator: Validators.validatePassword,
                 ),
                 const SizedBox(height: 16),
 
@@ -234,15 +194,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       },
                     ),
                   ),
-                  validator: (value) {
-                    if (value == null || value.isEmpty) {
-                      return 'Confirme su contraseña';
-                    }
-                    if (value != _passwordController.text) {
-                      return 'Las contraseñas no coinciden';
-                    }
-                    return null;
-                  },
+                  validator: (value) => Validators.validatePasswordConfirmation(
+                    value, 
+                    _passwordController.text,
+                  ),
                 ),
                 const SizedBox(height: 24),
 

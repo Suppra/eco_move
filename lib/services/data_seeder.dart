@@ -6,6 +6,10 @@ class DataSeeder {
   final DatabaseService _databaseService = DatabaseService();
 
   Future<void> seedInitialData() async {
+    // Limpiar datos existentes primero
+    await _databaseService.clearTestData();
+    
+    // Insertar nuevos datos
     await _seedStations();
     await _seedTransports();
   }
@@ -14,33 +18,59 @@ class DataSeeder {
     final stations = [
       StationModel(
         id: 'station_1',
-        name: 'Centro Comercial',
-        location: 'Calle 15 #20-30, Centro',
-        capacity: 20,
+        name: 'Plaza Alfonso López',
+        location: 'Plaza Alfonso López, Centro, Valledupar, César',
+        capacity: 25,
+        latitude: 10.4631,
+        longitude: -73.2535,
       ),
       StationModel(
         id: 'station_2',
-        name: 'Universidad Central',
-        location: 'Carrera 10 #25-40, Zona Universitaria',
-        capacity: 25,
+        name: 'Universidad Popular del Cesar',
+        location: 'Cra. 6 #23-55, Valledupar, César',
+        capacity: 30,
+        latitude: 10.4789,
+        longitude: -73.2456,
       ),
       StationModel(
         id: 'station_3',
-        name: 'Parque Principal',
-        location: 'Plaza Central, Zona Rosa',
-        capacity: 15,
+        name: 'Centro Comercial Guatapurí Plaza',
+        location: 'Cl. 16A #5-129, Valledupar, César',
+        capacity: 20,
+        latitude: 10.4745,
+        longitude: -73.2487,
       ),
       StationModel(
         id: 'station_4',
-        name: 'Terminal de Buses',
-        location: 'Avenida Norte #50-100',
-        capacity: 30,
+        name: 'Terminal de Transportes',
+        location: 'Carrera 7, Valledupar, César',
+        capacity: 35,
+        latitude: 10.4534,
+        longitude: -73.2398,
       ),
       StationModel(
         id: 'station_5',
-        name: 'Zona Empresarial',
-        location: 'Carrera 5 #80-20, Sector Financiero',
+        name: 'Parque de la Leyenda Vallenata',
+        location: 'Cra. 9 #13-65, Valledupar, César',
+        capacity: 22,
+        latitude: 10.4689,
+        longitude: -73.2511,
+      ),
+      StationModel(
+        id: 'station_6',
+        name: 'Hospital Eduardo Arredondo Daza',
+        location: 'Cra. 16A #18A-261, Valledupar, César',
         capacity: 18,
+        latitude: 10.4712,
+        longitude: -73.2443,
+      ),
+      StationModel(
+        id: 'station_7',
+        name: 'Estadio Armando Maestre Pavajeau',
+        location: 'Cl. 12 #19-63, Valledupar, César',
+        capacity: 28,
+        latitude: 10.4658,
+        longitude: -73.2398,
       ),
     ];
 
@@ -51,175 +81,242 @@ class DataSeeder {
 
   Future<void> _seedTransports() async {
     final transports = [
-      // Estación 1 - Centro Comercial
+      // Estación 1 - Plaza Alfonso López
       TransportModel(
         id: 'bike_001',
         type: TransportType.bicycle,
         stationId: 'station_1',
         isAvailable: true,
-        name: 'Bicicleta Verde #001',
+        name: 'Bicicleta Vallenata #001',
       ),
       TransportModel(
         id: 'bike_002',
         type: TransportType.bicycle,
         stationId: 'station_1',
         isAvailable: true,
-        name: 'Bicicleta Verde #002',
+        name: 'Bicicleta Vallenata #002',
       ),
       TransportModel(
         id: 'skateboard_001',
         type: TransportType.skateboard,
         stationId: 'station_1',
         isAvailable: true,
-        name: 'Patineta Eco #001',
+        name: 'Patineta Plaza #001',
       ),
       TransportModel(
         id: 'scooter_001',
         type: TransportType.scooter,
         stationId: 'station_1',
         isAvailable: true,
-        name: 'Scooter Eléctrico #001',
+        name: 'Scooter Centro #001',
       ),
 
-      // Estación 2 - Universidad Central
+      // Estación 2 - Universidad Popular del Cesar
       TransportModel(
         id: 'bike_003',
         type: TransportType.bicycle,
         stationId: 'station_2',
         isAvailable: true,
-        name: 'Bicicleta Verde #003',
+        name: 'Bicicleta UPC #003',
       ),
       TransportModel(
         id: 'bike_004',
         type: TransportType.bicycle,
         stationId: 'station_2',
         isAvailable: true,
-        name: 'Bicicleta Verde #004',
+        name: 'Bicicleta UPC #004',
       ),
       TransportModel(
         id: 'bike_005',
         type: TransportType.bicycle,
         stationId: 'station_2',
         isAvailable: true,
-        name: 'Bicicleta Verde #005',
+        name: 'Bicicleta UPC #005',
       ),
       TransportModel(
         id: 'skateboard_002',
         type: TransportType.skateboard,
         stationId: 'station_2',
         isAvailable: true,
-        name: 'Patineta Eco #002',
+        name: 'Patineta Universitaria #002',
       ),
       TransportModel(
         id: 'skateboard_003',
         type: TransportType.skateboard,
         stationId: 'station_2',
         isAvailable: true,
-        name: 'Patineta Eco #003',
+        name: 'Patineta Universitaria #003',
       ),
       TransportModel(
         id: 'scooter_002',
         type: TransportType.scooter,
         stationId: 'station_2',
         isAvailable: true,
-        name: 'Scooter Eléctrico #002',
+        name: 'Scooter Estudiantil #002',
       ),
 
-      // Estación 3 - Parque Principal
+      // Estación 3 - Centro Comercial Guatapurí Plaza
       TransportModel(
         id: 'bike_006',
         type: TransportType.bicycle,
         stationId: 'station_3',
         isAvailable: true,
-        name: 'Bicicleta Verde #006',
+        name: 'Bicicleta Guatapurí #006',
+      ),
+      TransportModel(
+        id: 'bike_007',
+        type: TransportType.bicycle,
+        stationId: 'station_3',
+        isAvailable: true,
+        name: 'Bicicleta Guatapurí #007',
       ),
       TransportModel(
         id: 'skateboard_004',
         type: TransportType.skateboard,
         stationId: 'station_3',
         isAvailable: true,
-        name: 'Patineta Eco #004',
+        name: 'Patineta Mall #004',
       ),
       TransportModel(
         id: 'scooter_003',
         type: TransportType.scooter,
         stationId: 'station_3',
         isAvailable: true,
-        name: 'Scooter Eléctrico #003',
+        name: 'Scooter Shopping #003',
       ),
 
-      // Estación 4 - Terminal de Buses
-      TransportModel(
-        id: 'bike_007',
-        type: TransportType.bicycle,
-        stationId: 'station_4',
-        isAvailable: true,
-        name: 'Bicicleta Verde #007',
-      ),
+      // Estación 4 - Terminal de Transportes
       TransportModel(
         id: 'bike_008',
         type: TransportType.bicycle,
         stationId: 'station_4',
         isAvailable: true,
-        name: 'Bicicleta Verde #008',
+        name: 'Bicicleta Terminal #008',
       ),
       TransportModel(
         id: 'bike_009',
         type: TransportType.bicycle,
         stationId: 'station_4',
         isAvailable: true,
-        name: 'Bicicleta Verde #009',
+        name: 'Bicicleta Terminal #009',
+      ),
+      TransportModel(
+        id: 'bike_010',
+        type: TransportType.bicycle,
+        stationId: 'station_4',
+        isAvailable: true,
+        name: 'Bicicleta Terminal #010',
       ),
       TransportModel(
         id: 'skateboard_005',
         type: TransportType.skateboard,
         stationId: 'station_4',
         isAvailable: true,
-        name: 'Patineta Eco #005',
+        name: 'Patineta Viajero #005',
       ),
       TransportModel(
         id: 'scooter_004',
         type: TransportType.scooter,
         stationId: 'station_4',
         isAvailable: true,
-        name: 'Scooter Eléctrico #004',
+        name: 'Scooter Express #004',
       ),
       TransportModel(
         id: 'scooter_005',
         type: TransportType.scooter,
         stationId: 'station_4',
         isAvailable: true,
-        name: 'Scooter Eléctrico #005',
+        name: 'Scooter Express #005',
       ),
 
-      // Estación 5 - Zona Empresarial
-      TransportModel(
-        id: 'bike_010',
-        type: TransportType.bicycle,
-        stationId: 'station_5',
-        isAvailable: true,
-        name: 'Bicicleta Verde #010',
-      ),
+      // Estación 5 - Parque de la Leyenda Vallenata
       TransportModel(
         id: 'bike_011',
         type: TransportType.bicycle,
         stationId: 'station_5',
         isAvailable: true,
-        name: 'Bicicleta Verde #011',
+        name: 'Bicicleta Leyenda #011',
+      ),
+      TransportModel(
+        id: 'bike_012',
+        type: TransportType.bicycle,
+        stationId: 'station_5',
+        isAvailable: true,
+        name: 'Bicicleta Leyenda #012',
       ),
       TransportModel(
         id: 'skateboard_006',
         type: TransportType.skateboard,
         stationId: 'station_5',
         isAvailable: true,
-        name: 'Patineta Eco #006',
+        name: 'Patineta Cultural #006',
       ),
       TransportModel(
         id: 'scooter_006',
         type: TransportType.scooter,
         stationId: 'station_5',
         isAvailable: true,
-        name: 'Scooter Eléctrico #006',
+        name: 'Scooter Folclórico #006',
+      ),
+
+      // Estación 6 - Hospital Eduardo Arredondo Daza
+      TransportModel(
+        id: 'bike_013',
+        type: TransportType.bicycle,
+        stationId: 'station_6',
+        isAvailable: true,
+        name: 'Bicicleta Salud #013',
+      ),
+      TransportModel(
+        id: 'bike_014',
+        type: TransportType.bicycle,
+        stationId: 'station_6',
+        isAvailable: true,
+        name: 'Bicicleta Salud #014',
+      ),
+      TransportModel(
+        id: 'scooter_007',
+        type: TransportType.scooter,
+        stationId: 'station_6',
+        isAvailable: true,
+        name: 'Scooter Médico #007',
+      ),
+
+      // Estación 7 - Estadio Armando Maestre Pavajeau
+      TransportModel(
+        id: 'bike_015',
+        type: TransportType.bicycle,
+        stationId: 'station_7',
+        isAvailable: true,
+        name: 'Bicicleta Deportiva #015',
+      ),
+      TransportModel(
+        id: 'bike_016',
+        type: TransportType.bicycle,
+        stationId: 'station_7',
+        isAvailable: true,
+        name: 'Bicicleta Deportiva #016',
+      ),
+      TransportModel(
+        id: 'skateboard_007',
+        type: TransportType.skateboard,
+        stationId: 'station_7',
+        isAvailable: true,
+        name: 'Patineta Atlética #007',
+      ),
+      TransportModel(
+        id: 'skateboard_008',
+        type: TransportType.skateboard,
+        stationId: 'station_7',
+        isAvailable: true,
+        name: 'Patineta Atlética #008',
+      ),
+      TransportModel(
+        id: 'scooter_008',
+        type: TransportType.scooter,
+        stationId: 'station_7',
+        isAvailable: true,
+        name: 'Scooter Stadium #008',
       ),
     ];
 

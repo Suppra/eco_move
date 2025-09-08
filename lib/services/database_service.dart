@@ -402,4 +402,32 @@ class DatabaseService {
       'stationActivity': stationActivity,
     };
   }
+
+  // Métodos para limpiar datos de prueba (solo para desarrollo)
+  Future<void> clearAllStations() async {
+    final batch = _firestore.batch();
+    final stations = await _firestore.collection('stations').get();
+    
+    for (final doc in stations.docs) {
+      batch.delete(doc.reference);
+    }
+    
+    await batch.commit();
+  }
+
+  Future<void> clearAllTransports() async {
+    final batch = _firestore.batch();
+    final transports = await _firestore.collection('transports').get();
+    
+    for (final doc in transports.docs) {
+      batch.delete(doc.reference);
+    }
+    
+    await batch.commit();
+  }
+
+  Future<void> clearTestData() async {
+    await clearAllTransports();
+    await clearAllStations();
+  }
 }

@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/station_model.dart';
 import '../services/database_service.dart';
 import '../services/location_service.dart';
-import '../utils/validators.dart';
-import '../widgets/google_places_autocomplete_widget.dart';
-import 'dart:async';
 import 'station_detail_screen.dart';
 
 class StationsScreen extends StatefulWidget {
@@ -160,9 +157,6 @@ class _AddStationScreenState extends State<AddStationScreen> {
   double? _selectedLatitude;
   double? _selectedLongitude;
   bool _isLoadingLocation = false;
-  
-  // Controlador del mapa
-  Completer<GoogleMapController> _mapController = Completer();
 
   @override
   void dispose() {
@@ -191,19 +185,6 @@ class _AddStationScreenState extends State<AddStationScreen> {
             _locationController.text = address;
           }
         });
-        
-        // Animar el mapa hacia la nueva posición
-        if (_mapController.isCompleted) {
-          final GoogleMapController controller = await _mapController.future;
-          controller.animateCamera(
-            CameraUpdate.newCameraPosition(
-              CameraPosition(
-                target: LatLng(position.latitude, position.longitude),
-                zoom: 16,
-              ),
-            ),
-          );
-        }
         
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -256,19 +237,6 @@ class _AddStationScreenState extends State<AddStationScreen> {
           _selectedLongitude = coordinates['longitude'];
         });
         
-        // Animar el mapa hacia la nueva posición
-        if (_mapController.isCompleted) {
-          final GoogleMapController controller = await _mapController.future;
-          controller.animateCamera(
-            CameraUpdate.newCameraPosition(
-              CameraPosition(
-                target: LatLng(coordinates['latitude']!, coordinates['longitude']!),
-                zoom: 16,
-              ),
-            ),
-          );
-        }
-        
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -300,21 +268,6 @@ class _AddStationScreenState extends State<AddStationScreen> {
       if (mounted) {
         setState(() => _isLoadingLocation = false);
       }
-    }
-  }
-
-  // Animar mapa hacia una ubicación específica
-  Future<void> _animateToLocation(double latitude, double longitude) async {
-    if (_mapController.isCompleted) {
-      final GoogleMapController controller = await _mapController.future;
-      controller.animateCamera(
-        CameraUpdate.newCameraPosition(
-          CameraPosition(
-            target: LatLng(latitude, longitude),
-            zoom: 16,
-          ),
-        ),
-      );
     }
   }
 
@@ -379,9 +332,13 @@ class _AddStationScreenState extends State<AddStationScreen> {
                   labelText: 'Nombre de la Estación',
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.location_city),
-                  hintText: 'Ej: Plaza Alfonso López',
                 ),
-                validator: Validators.validateName,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'El nombre es obligatorio';
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: 16),
 
@@ -393,45 +350,54 @@ class _AddStationScreenState extends State<AddStationScreen> {
                   labelText: 'Capacidad (número de transportes)',
                   border: OutlineInputBorder(),
                   prefixIcon: Icon(Icons.storage),
-                  hintText: 'Ej: 25',
                 ),
-                validator: Validators.validateCapacity,
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'La capacidad es obligatoria';
+                  }
+                  final capacity = int.tryParse(value);
+                  if (capacity == null || capacity <= 0) {
+                    return 'Ingresa un número válido mayor a 0';
+                  }
+                  return null;
+                },
               ),
               const SizedBox(height: 16),
 
-              // Ubicación con autocompletar
-              GooglePlacesAutoCompleteWidget(
+              // Ubicación
+              TextFormField(
                 controller: _locationController,
-                labelText: 'Dirección/Ubicación',
-                hintText: 'Buscar dirección en Valledupar...',
-                prefixIcon: const Icon(Icons.location_on),
-                suffixIcons: [
-                  IconButton(
-                    onPressed: _isLoadingLocation ? null : _searchLocationFromAddress,
-                    icon: const Icon(Icons.search),
-                    tooltip: 'Buscar coordenadas',
+                decoration: InputDecoration(
+                  labelText: 'Dirección/Ubicación',
+                  border: const OutlineInputBorder(),
+                  prefixIcon: const Icon(Icons.location_on),
+                  suffixIcon: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      IconButton(
+                        onPressed: _isLoadingLocation ? null : _searchLocationFromAddress,
+                        icon: const Icon(Icons.search),
+                        tooltip: 'Buscar coordenadas',
+                      ),
+                      IconButton(
+                        onPressed: _isLoadingLocation ? null : _getCurrentLocation,
+                        icon: const Icon(Icons.my_location),
+                        tooltip: 'Usar ubicación actual',
+                      ),
+                    ],
                   ),
-                  IconButton(
-                    onPressed: _isLoadingLocation ? null : _getCurrentLocation,
-                    icon: const Icon(Icons.my_location),
-                    tooltip: 'Usar ubicación actual',
-                  ),
-                ],
-                onPlaceSelected: (prediction) {
-                  if (prediction.latitude != null && prediction.longitude != null) {
-                    setState(() {
-                      _selectedLatitude = prediction.latitude;
-                      _selectedLongitude = prediction.longitude;
-                    });
-                    _animateToLocation(prediction.latitude!, prediction.longitude!);
+                ),
+                validator: (value) {
+                  if (value == null || value.trim().isEmpty) {
+                    return 'La ubicación es obligatoria';
                   }
+                  return null;
                 },
-                validator: Validators.validateLocation,
               ),
               const SizedBox(height: 16),
 
               // Información de coordenadas
-              if (_selectedLatitude != null && _selectedLongitude != null) ...[
+              if (_selectedLatitude != null && _selectedLongitude != null)
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
@@ -457,65 +423,8 @@ class _AddStationScreenState extends State<AddStationScreen> {
                     ],
                   ),
                 ),
-                const SizedBox(height: 16),
-                // Mapa interactivo - Más grande
-                Container(
-                  height: 350, // Aumentado de 200 a 350
-                  decoration: BoxDecoration(
-                    border: Border.all(color: Colors.grey.shade300),
-                    borderRadius: BorderRadius.circular(8),
-                  ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(8),
-                    child: GoogleMap(
-                      onMapCreated: (GoogleMapController controller) {
-                        _mapController.complete(controller);
-                      },
-                      initialCameraPosition: CameraPosition(
-                        target: LatLng(_selectedLatitude!, _selectedLongitude!),
-                        zoom: 15,
-                      ),
-                      markers: {
-                        Marker(
-                          markerId: const MarkerId('station_location'),
-                          position: LatLng(_selectedLatitude!, _selectedLongitude!),
-                          infoWindow: InfoWindow(
-                            title: _nameController.text.isNotEmpty 
-                                ? _nameController.text 
-                                : 'Nueva Estación',
-                            snippet: _locationController.text,
-                          ),
-                        ),
-                      },
-                      onTap: (LatLng position) async {
-                        setState(() {
-                          _selectedLatitude = position.latitude;
-                          _selectedLongitude = position.longitude;
-                        });
-                        
-                        // Obtener dirección del punto tocado
-                        try {
-                          final address = await LocationService.getAddressFromCoordinates(
-                            position.latitude, 
-                            position.longitude
-                          );
-                          if (address != null && mounted) {
-                            _locationController.text = address;
-                          }
-                        } catch (e) {
-                          // Silencioso si no se puede obtener la dirección
-                        }
-                      },
-                      zoomControlsEnabled: true,
-                      mapToolbarEnabled: false,
-                      myLocationEnabled: true,
-                      myLocationButtonEnabled: false, // Usamos nuestro botón personalizado
-                    ),
-                  ),
-                ),
-              ],
 
-              const SizedBox(height: 16), // Espacio antes del botón
+              const Spacer(),
 
               // Botón para guardar
               ElevatedButton(

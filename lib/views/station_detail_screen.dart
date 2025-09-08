@@ -3,6 +3,8 @@ import '../models/station_model.dart';
 import '../models/transport_model.dart';
 import '../services/database_service.dart';
 import '../services/auth_service.dart';
+import '../widgets/transport_characteristics_widget.dart';
+import 'add_transport_screen.dart';
 
 class StationDetailScreen extends StatefulWidget {
   final StationModel station;
@@ -21,6 +23,9 @@ class _StationDetailScreenState extends State<StationDetailScreen> {
   List<TransportModel>? _cachedTransports;
   Map<TransportType, int>? _cachedAvailability;
   late Stream<List<TransportModel>> _transportStream;
+  
+  // Filtros
+  TransportType? _selectedTypeFilter;
   
   @override
   void initState() {
@@ -44,83 +49,10 @@ class _StationDetailScreenState extends State<StationDetailScreen> {
 
   // Método para agregar nuevo transporte a la estación
   void _showAddTransportDialog() {
-    final nameController = TextEditingController();
-    TransportType selectedType = TransportType.bicycle;
-
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setState) => AlertDialog(
-          title: const Text('Agregar Nuevo Transporte'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: nameController,
-                decoration: const InputDecoration(
-                  labelText: 'Nombre/ID del Transporte',
-                  border: OutlineInputBorder(),
-                ),
-              ),
-              const SizedBox(height: 16),
-              DropdownButtonFormField<TransportType>(
-                value: selectedType,
-                decoration: const InputDecoration(
-                  labelText: 'Tipo de Transporte',
-                  border: OutlineInputBorder(),
-                ),
-                items: TransportType.values.map((type) {
-                  return DropdownMenuItem(
-                    value: type,
-                    child: Row(
-                      children: [
-                        Icon(_getTransportIcon(type)),
-                        const SizedBox(width: 8),
-                        Text(_getTransportName(type)),
-                      ],
-                    ),
-                  );
-                }).toList(),
-                onChanged: (value) {
-                  setState(() {
-                    selectedType = value!;
-                  });
-                },
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Cancelar'),
-            ),
-            ElevatedButton(
-              onPressed: () async {
-                if (nameController.text.isNotEmpty) {
-                  final transportId = DateTime.now().millisecondsSinceEpoch.toString();
-                  final transport = TransportModel(
-                    id: transportId,
-                    type: selectedType,
-                    stationId: widget.station.id,
-                    isAvailable: true,
-                    name: nameController.text,
-                  );
-                  
-                  await _databaseService.addTransport(transport);
-                  Navigator.pop(context);
-                  
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Transporte agregado exitosamente'),
-                      backgroundColor: Colors.green,
-                    ),
-                  );
-                }
-              },
-              child: const Text('Agregar'),
-            ),
-          ],
-        ),
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => AddTransportScreen(stationId: widget.station.id),
       ),
     );
   }
@@ -330,6 +262,41 @@ class _StationDetailScreenState extends State<StationDetailScreen> {
                 ),
               ],
             ),
+            
+            // Filtros de transporte
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const Text(
+                    'Filtrar por:',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.grey,
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  // Filtros por tipo
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Row(
+                      children: [
+                        _buildFilterChip('Todos', null, true),
+                        const SizedBox(width: 8),
+                        _buildFilterChip('🚲 Bicicletas', TransportType.bicycle, true),
+                        const SizedBox(width: 8),
+                        _buildFilterChip('🛴 Scooters', TransportType.scooter, true),
+                        const SizedBox(width: 8),
+                        _buildFilterChip('🛹 Patinetas', TransportType.skateboard, true),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            
             const SizedBox(height: 10),
             Expanded(
               child: StreamBuilder<List<TransportModel>>(
@@ -344,7 +311,10 @@ class _StationDetailScreenState extends State<StationDetailScreen> {
                   }
 
                   // Usar datos del stream si están disponibles, sino usar cache
-                  final transports = snapshot.data ?? _cachedTransports ?? [];
+                  final allTransports = snapshot.data ?? _cachedTransports ?? [];
+                  
+                  // Aplicar filtros
+                  final transports = _applyFilters(allTransports);
                   
                   // Actualizar cache cuando lleguen nuevos datos
                   if (snapshot.hasData && snapshot.data != _cachedTransports) {
@@ -394,14 +364,52 @@ class _StationDetailScreenState extends State<StationDetailScreen> {
                       return Card(
                         margin: const EdgeInsets.symmetric(vertical: 4),
                         child: ListTile(
-                          leading: CircleAvatar(
-                            backgroundColor: transport.isAvailable 
-                                ? Colors.green 
-                                : Colors.grey,
-                            child: Icon(
-                              _getTransportIcon(transport.type),
-                              color: Colors.white,
+                          leading: Container(
+                            width: 60,
+                            height: 60,
+                            decoration: BoxDecoration(
+                              borderRadius: BorderRadius.circular(8),
+                              color: Colors.grey.shade100,
                             ),
+                            child: transport.imageUrl != null
+                                ? ClipRRect(
+                                    borderRadius: BorderRadius.circular(8),
+                                    child: Image.network(
+                                      transport.imageUrl!,
+                                      fit: BoxFit.cover,
+                                      errorBuilder: (context, error, stackTrace) {
+                                        return CircleAvatar(
+                                          backgroundColor: transport.isAvailable 
+                                              ? Colors.green 
+                                              : Colors.grey,
+                                          child: Icon(
+                                            _getTransportIcon(transport.type),
+                                            color: Colors.white,
+                                          ),
+                                        );
+                                      },
+                                      loadingBuilder: (context, child, loadingProgress) {
+                                        if (loadingProgress == null) return child;
+                                        return Center(
+                                          child: CircularProgressIndicator(
+                                            value: loadingProgress.expectedTotalBytes != null
+                                                ? loadingProgress.cumulativeBytesLoaded /
+                                                    loadingProgress.expectedTotalBytes!
+                                                : null,
+                                          ),
+                                        );
+                                      },
+                                    ),
+                                  )
+                                : CircleAvatar(
+                                    backgroundColor: transport.isAvailable 
+                                        ? Colors.green 
+                                        : Colors.grey,
+                                    child: Icon(
+                                      _getTransportIcon(transport.type),
+                                      color: Colors.white,
+                                    ),
+                                  ),
                           ),
                           title: Text(
                             transport.name,
@@ -422,19 +430,40 @@ class _StationDetailScreenState extends State<StationDetailScreen> {
                               ),
                             ],
                           ),
-                          trailing: transport.isAvailable
-                              ? ElevatedButton(
-                                  onPressed: () => _borrowTransport(transport),
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: Colors.green,
-                                    foregroundColor: Colors.white,
-                                  ),
-                                  child: const Text('Tomar'),
-                                )
-                              : const Chip(
-                                  label: Text('En uso'),
-                                  backgroundColor: Colors.orange,
+                          trailing: SizedBox(
+                            width: 120,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.end,
+                              children: [
+                                // Botón para ver características
+                                IconButton(
+                                  onPressed: () => _showTransportDetails(transport),
+                                  icon: const Icon(Icons.info_outline),
+                                  tooltip: 'Ver características',
+                                  iconSize: 20,
                                 ),
+                                const SizedBox(width: 4),
+                                // Botón para tomar o estado
+                                if (transport.isAvailable)
+                                  ElevatedButton(
+                                    onPressed: () => _borrowTransport(transport),
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Colors.green,
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                      minimumSize: const Size(60, 32),
+                                    ),
+                                    child: const Text('Tomar', style: TextStyle(fontSize: 12)),
+                                  )
+                                else
+                                  const Chip(
+                                    label: Text('En uso', style: TextStyle(fontSize: 10)),
+                                    backgroundColor: Colors.orange,
+                                    visualDensity: VisualDensity.compact,
+                                  ),
+                              ],
+                            ),
+                          ),
                         ),
                       );
                     },
@@ -492,5 +521,71 @@ class _StationDetailScreenState extends State<StationDetailScreen> {
       case TransportType.skateboard:
         return 'Patineta';
     }
+  }
+
+  // Método para mostrar características del transporte
+  void _showTransportDetails(TransportModel transport) {
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    transport.name,
+                    style: const TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(Icons.close),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              TransportCharacteristicsWidget(transport: transport),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  // Construir chips de filtro por tipo
+  Widget _buildFilterChip(String label, TransportType? type, bool isTypeFilter) {
+    final isSelected = isTypeFilter ? _selectedTypeFilter == type : false;
+    
+    return FilterChip(
+      label: Text(label),
+      selected: isSelected,
+      onSelected: (selected) {
+        setState(() {
+          _selectedTypeFilter = selected ? type : null;
+        });
+      },
+      selectedColor: Colors.green.shade100,
+      checkmarkColor: Colors.green,
+      backgroundColor: Colors.grey.shade100,
+    );
+  }
+
+  // Construir chips de filtro por estado
+  // Aplicar filtros a la lista de transportes
+  List<TransportModel> _applyFilters(List<TransportModel> transports) {
+    List<TransportModel> filtered = transports;
+
+    // Filtrar por tipo
+    if (_selectedTypeFilter != null) {
+      filtered = filtered.where((transport) => transport.type == _selectedTypeFilter).toList();
+    }
+
+    return filtered;
   }
 }

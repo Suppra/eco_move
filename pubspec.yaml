@@ -1,5 +1,12 @@
 name: EcoMove
-description: "Plataforma de Préstamo de Transporte Ecológico"
+description: "Plataforma de   # Nuevas dependencias
+  google_maps_flutter: ^2.8.0
+  geolocator: ^13.0.2
+  geocoding: ^3.0.0
+  shared_preferences: ^2.3.3
+  http: ^1.2.2
+  image_picker: ^1.1.0
+  firebase_storage: ^12.0.1 de Transporte Ecológico"
 # The following line prevents the package from being accidentally published to
 # pub.dev using `flutter pub publish`. This is preferred for private packages.
 publish_to: "none" # Remove this line if you wish to publish to pub.dev
@@ -40,6 +47,15 @@ dependencies:
   firebase_auth: ^6.0.2
   cloud_firestore: ^6.0.1
   flutter_launcher_icons: ^0.14.4
+  
+  # Nuevas dependencias
+  google_maps_flutter: ^2.8.0
+  geolocator: ^13.0.2
+  geocoding: ^3.0.0
+  shared_preferences: ^2.3.3
+  http: ^1.2.2
+  image_picker: ^1.1.0
+  firebase_storage: ^13.0.1
 
 dev_dependencies:
   flutter_test:

@@ -3,12 +3,16 @@ class StationModel {
   final String name;
   final String location;
   final int capacity;
+  final double? latitude;
+  final double? longitude;
 
   StationModel({
     required this.id,
     required this.name,
     required this.location,
     required this.capacity,
+    this.latitude,
+    this.longitude,
   });
 
   Map<String, dynamic> toMap() {
@@ -17,6 +21,8 @@ class StationModel {
       'name': name,
       'location': location,
       'capacity': capacity,
+      'latitude': latitude,
+      'longitude': longitude,
     };
   }
 
@@ -26,6 +32,8 @@ class StationModel {
       name: map['name'] ?? '',
       location: map['location'] ?? '',
       capacity: map['capacity'] ?? 0,
+      latitude: map['latitude']?.toDouble(),
+      longitude: map['longitude']?.toDouble(),
     );
   }
 }

@@ -9,15 +9,21 @@ EcoMove es una aplicación móvil desarrollada en Flutter que facilita el acceso
 - **Registro completo** con datos básicos (nombre, correo, documento)
 - **Autenticación segura** con Firebase Auth
 - **Perfil de usuario** con estadísticas personalizadas
+- **🆕 Recordar email** - Opción para recordar el correo electrónico en el login
 
 ### 🗺️ Gestión de Estaciones
 - **Visualización** de todas las estaciones disponibles
 - **Información detallada** de ubicación y capacidad
 - **Disponibilidad en tiempo real** por tipo de transporte
 - **Agregar nuevas estaciones** (funcionalidad administrativa)
+- **🆕 Integración con Google Maps** - Visualización de ubicaciones en mapa interactivo
+- **🆕 Servicios de ubicación GPS** - Obtener coordenadas automáticamente
+- **🆕 Geocodificación** - Conversión de direcciones a coordenadas
 
 ### 🚴‍♂️ Gestión de Transportes
 - **3 tipos de transporte:** Bicicletas, Patinetas, Scooters eléctricos
+- **🆕 Características específicas** por tipo de transporte (velocidad, autonomía, peso)
+- **🆕 Filtros avanzados** - Filtrar por tipo, estado y características
 - **Consulta de disponibilidad** en cada estación
 - **Agregar transportes** a las estaciones
 - **Estado en tiempo real** (disponible/en uso)
